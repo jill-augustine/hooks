@@ -2,13 +2,16 @@
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["pre_commit_hooks"]
+
 [project]
-name = "format-commit-msg"
+name = "pre_commit_hooks"
 version = "0.1.0"
 dependencies = [
   "GitPython",
 ]
 requires-python = ">= 3.9"
 
-[project.entry-points.format_commit_msg]
-format = "format_commit_msg:main"
+[project.scripts]
+format-commit-msg = "pre_commit_hooks.format_commit_msg:main"
