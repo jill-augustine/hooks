@@ -1,6 +1,6 @@
 - id: format-commit-msg
   name: Add standard prefix to commit message
-  description: "Changes 'chore: my msg' on branch feat/ABC to 'ABC(chore): my message'"
+  description: "Changes 'chore: my message' on branch feat/ABC to 'ABC(chore): my message'"
   entry: format-commit-msg
   language: python
   stages: [prepare-commit-msg]
