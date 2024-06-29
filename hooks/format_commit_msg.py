@@ -25,16 +25,18 @@ DEFAULT_SKIP_PREFIXES = ["skip", "no-verify", "s"]
 
 class Commit:
 
-    def __init__(self, message_fp: Union[str]):
+    def __init__(self, message_fp: Union[str], branch_name: str = None):
 
         self.message_fp = message_fp
         self.default_commit_type: str = None
         self.issue_no: str = None
         self.commit_message = None
         self.commit_type = None
+        self.updated_commit_message = None
         self._commit_types = DEFAULT_COMMIT_TYPES
         self._skip_prefixes = DEFAULT_SKIP_PREFIXES
-        self._branch_name = None
+        self.branch_name = branch_name
+        self.skipped = False
 
         # Update branch_name, and commit_type and issue_no if possible
         self._set_branch_info()
@@ -56,9 +58,10 @@ class Commit:
         ValueError
             If default commit type is found but Jira issue no is not found.
         """
-        repo = git.Repo()
-        self._branch_name = repo.active_branch.name
-        branch_name_parts = self._branch_name.split("/")
+        if not self.branch_name:
+            repo = git.Repo()
+            self.branch_name = repo.active_branch.name
+        branch_name_parts = self.branch_name.split("/")
 
         if branch_name_parts[0].lower() not in self._commit_types:
             return
@@ -80,7 +83,7 @@ class Commit:
 
     def _write_commit_message(self):
         with open(self.message_fp, "w", encoding="utf-8") as f:
-            f.write(self.commit_message)
+            f.write(self.updated_commit_message)
 
     def _extract_type_from_commit_message(self):
         """Extract the commit type from the commit message. Remove the commit
@@ -93,7 +96,7 @@ class Commit:
             if self.default_commit_type is None:
                 err = (
                     "Commit type could not be determined from the branch "
-                    f"name '{self._branch_name}' or the commit message "
+                    f"name '{self.branch_name}' or the commit message "
                     f"'{self.commit_message.strip()}'. Start the commit "
                     "message with one of "
                     f"{ {s+':' for s in self._skip_prefixes} } to skip this "
@@ -121,12 +124,16 @@ class Commit:
     def _format_commit_message(self):
         if self.commit_type in self._skip_prefixes:
             # No further changes. (The skip prefix was already extracted)
+            self.updated_commit_message = self.commit_message
             return
+
+        if (self.commit_type is None) or (self.issue_no is None):
+            raise ValueError("Either commit_type of issue_no could not be determined.")
         print(
             f"Extracted commit_type: '{self.commit_type}' and "
             f"issue_no: '{self.issue_no}'."
         )
-        self.commit_message = (
+        self.updated_commit_message = (
             f"{self.issue_no.upper()}"
             f"({self.commit_type.lower()}): "
             f"{self.commit_message}"
